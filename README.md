@@ -1,7 +1,7 @@
 # Pokédex App
 
 A modern and sleek Pokedex built using **React**, **TypeScript**, and **Vite**. This app allows you to explore Pokémon, view their stats, and build your own custom team. View it here:
-https://alvinmahmud.github.io/pokedex-app
+https://alvinmahmud.github.io/ReactDex/
 
 ## Features
 
