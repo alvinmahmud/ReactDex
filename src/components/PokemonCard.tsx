@@ -1,43 +1,44 @@
 import { useEffect, useState } from "react";
 import { getPokemonByName } from "@/services/pokemonService";
 import { Pokemon } from "@/types/pokemon";
+import PokemonSearch from "./PokemonSearch";
 
 const PokemonCard = () => {
   const [pokemon, setPokemon] = useState<Pokemon | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pokemonName, setPokemonName] = useState<string | null>(null);
-  const [input, setInput] = useState("");
+  const [searchVersion, setSearchVersion] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchPokemon = async () => {
       if (!pokemonName) return;
       try {
         setLoading(true);
         const data = await getPokemonByName(pokemonName);
+        if (cancelled) return;
         setPokemon(data);
-        setError(null);
+        setError(
+          data
+            ? null
+            : "Could not find this Pokémon. Please check the name or try again.",
+        );
       } catch (err) {
+        if (cancelled) return;
         setPokemon(null);
         setError("Invalid Pokémon name. Showing unknown Pokémon.");
         console.error(err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchPokemon();
-  }, [pokemonName]);
-
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(event.target.value);
-  };
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    setPokemonName(input.trim().toLowerCase().replace(/\s+/g, "-") || null);
-    setInput("");
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [pokemonName, searchVersion]);
 
   const formatPokemonName = (name: string): string => {
     const formMapping: { [key: string]: string } = {
@@ -97,7 +98,7 @@ const PokemonCard = () => {
       [nameParts[0], nameParts[1]] = [nameParts[1], nameParts[0]];
 
       const capitalizedParts = nameParts.map(
-        (name) => name.charAt(0).toUpperCase() + name.slice(1)
+        (name) => name.charAt(0).toUpperCase() + name.slice(1),
       );
 
       return capitalizedParts.join(" ");
@@ -122,23 +123,12 @@ const PokemonCard = () => {
 
   return (
     <div className="min-w-[500px] min-h-[500px] p-8 border-2 border-black rounded-xl bg-gray-300">
-      <form onSubmit={handleSubmit} className="mb-4">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Enter a Pokémon"
-            value={input}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded-md pr-12 font-pokemon"
-          />
-          <button
-            type="submit"
-            className="absolute top-0 right-0 h-full px-4 bg-red-700 text-white rounded-r-md font-pokemon"
-          >
-            Go!
-          </button>
-        </div>
-      </form>
+      <PokemonSearch
+        onSearch={(name) => {
+          setPokemonName(name);
+          setSearchVersion((version) => version + 1);
+        }}
+      />
 
       {loading && <div className="text-center text-gray-500">Loading...</div>}
 
